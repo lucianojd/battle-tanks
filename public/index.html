@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Battle Tanks</title>
+        <link rel="stylesheet" href="/css/default.css">
+    </head>
+    <body>
+        <script>
+            //Need to implement a method of hashing the values.
+            function hidePlainText(f) {
+                if(f == 'lform') {
+                    let p = document.getElementById("lpass");  // Grab DOM object for password field.
+                } else {
+                    let p1 = document.getElementById("cpass1"); // Grab account creation password field 1.
+                    let p2 = document.getElementById("cpass2"); // Grab account creation password field 2.
+
+                    if(p1.value != p2.value) // If the passwords don't match send blank passwords and try again.
+                    {
+                        alert("Your passwords don't match. Please try again.");
+                        p1.value = "";
+                        p2.value = "";
+                        return true;
+                    }
+                }
+                return true;
+            }
+        </script>
+        <h1>Welcome to Battle Tanks!</h1>
+        <h2>
+            Login
+        </h2>
+        <form name="lform" id="lform" action="" onsubmit="hidePlainText('lform')">
+            <label for="luname">Username:</label><br>
+            <input type="text" id="luname" name="luname"><br>
+            <label for="lpass">Password:</label><br>
+            <input type="password" id="lpass" name="lpass"><br>
+            <input type="submit" value="Login">
+        </form>
+        <h2>
+            Create an Account
+        </h2>
+        <form name="cform" id="cform" action="" onsubmit="hidePlainText('cform')">
+            <label for="cuname">Username:</label><br>
+            <input type="text" id="cuname" name="cuname"><br>
+            <label for="cpass1">Password:</label><br>
+            <input type="password" id="cpass1" name="cpass1"><br>
+            <label for="cpass2">Confirm Password:</label><br>
+            <input type="password" id="cpass2" name="cpass2"><br>
+            <input type="submit" value="Create Account">
+        </form>
+    </body>
+</html>
