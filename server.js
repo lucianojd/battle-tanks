@@ -5,8 +5,25 @@ var port    = process.env.PORT || 3000;    // Use environment port, otherwise us
 
 app.use(express.static(__dirname + '/public')); // Declare directory with static files.
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html'); // Return index.html in the public folder.
+//Attempt to login.
+app.get('/login', (req, res) => {
+    res.send("Okay");
+});
+
+//Attempt to create an account.
+app.post('/creacc', (req, res) => {
+
+});
+
+//For joining to players in a game.
+app.get('/game/:id', (req, res) => {
+    console.log(`ID: ${req.params.id}`);
+    res.sendFile(__dirname + '/public/game.html');
+});
+
+//For grabbing the game.html for testing.
+app.get('/game', (req, res) => {
+    res.sendFile(__dirname + '/public/game.html');
 });
 
 server.listen(port, () => {
