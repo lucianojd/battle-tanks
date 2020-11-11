@@ -8,6 +8,11 @@
         <script>
             function login() {
                 let xhttp = new XMLHttpRequest();
+                let uname = document.getElementById('luname').value;
+                let upass  = document.getElementById('lpass').value;
+
+                document.getElementById('luname').value = '';
+                document.getElementById('lpass').value = '';
 
                 xhttp.onreadystatechange = function() {
                     if(this.readyState == 4 && this.status == 200) {
@@ -15,8 +20,9 @@
                     }
                 };
 
-                xhttp.open("GET", "/login", true);
-                xhttp.send();
+                params = "uname=" + uname + "&upass=" + upass;
+                xhttp.open("GET", "/login/?" + params, true);
+                xhttp.send(JSON.stringify({"uname":uname, "upass":upass}))
             }
             function createAccount() {
                 let xhttp = new XMLHttpRequest();
@@ -27,11 +33,16 @@
                         }
                     };
 
-                xhttp.open("POST", "/creaacc", true);
+                xhttp.open("POST", "/createaccount", true);
                 xhttp.send();
             }
         </script>
         <h1 style="text-align: center;">Welcome to Battle Tanks!</h1>
+        <p style="text-align: center;">
+            Hello and welcome to Battle Tanks! If you don't have an account please create one.<br>
+            Please use a throw-away password like '1234' as we store passwords in plaintext.<br>
+            Once you have created an account please sign in and then you can join or create a game.<br>
+        </p>
         <div style="display: flex; align-items: flex-start; justify-content: center;">
         <div style="margin: 20px;">
             <h2>
@@ -59,6 +70,7 @@
             </div>
             <div style="margin: 20px;">
                 <h2>Create Game</h2>
+                <p><strong>Status:</strong> Not signed in.</p>
                 <label for="create_game">Randomly generates a code for another play to join with.</label><br>
                 <button id="create_game" onclick="">Create Game</button><br>
                 <form name="join_game_form" id="join_game_form">
@@ -68,10 +80,5 @@
                 <button onclick="">Join Game</button>
             </div>
         </div>
-        <p style="text-align: center;">
-            Hello and welcome to Battle Tanks! If you don't have an account please create one.<br>
-            Please use a throw-away password like '1234' as we store passwords in plaintext.<br>
-            Once you have created an account please sign in and then you can join or create a game.<br>
-        </p>
     </body>
 </html>
