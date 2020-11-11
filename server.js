@@ -7,12 +7,15 @@ app.use(express.static(__dirname + '/public')); // Declare directory with static
 
 //Attempt to login.
 app.get('/login', (req, res) => {
-    res.send("Okay");
+    let uname = req.query.uname;
+    let upass = req.query.upass;
+
+    res.send(/*Will send if account exists or not*/);
 });
 
 //Attempt to create an account.
-app.post('/creacc', (req, res) => {
-
+app.post('/createaccount', (req, res) => {
+    res.send(/*Will send if account was created.*/)
 });
 
 //For joining to players in a game.
