@@ -36,6 +36,12 @@
                 xhttp.open("POST", "/createaccount", true);
                 xhttp.send();
             }
+            function createGame() {
+                window.location.pathname = "/game";
+            }
+            function joinGame() {
+                window.location.pathname = "/game"
+            }
         </script>
         <h1 style="text-align: center;">Welcome to Battle Tanks!</h1>
         <p style="text-align: center;">
@@ -72,12 +78,12 @@
                 <h2>Create Game</h2>
                 <p><strong>Status:</strong> Not signed in.</p>
                 <label for="create_game">Randomly generates a code for another play to join with.</label><br>
-                <button id="create_game" onclick="">Create Game</button><br>
+                <button id="create_game" onclick="createGame()">Create Game</button><br>
                 <form name="join_game_form" id="join_game_form">
                     <label for="join_game">Enter code to join game:</label><br>
                     <input type="text" id="join_game" name="join_game"><br>
                 </form>
-                <button onclick="">Join Game</button>
+                <button onclick="joinGame()">Join Game</button>
             </div>
         </div>
     </body>
