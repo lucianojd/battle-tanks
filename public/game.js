@@ -17,12 +17,17 @@ window.onload = function () {
     };
 
     var game = new Phaser.Game(config);
-    var gm;
+    var date = new Date();
+    var gm;       //GameManager
+    var im;       //InputManager
+    var player;   //Player's tank.
+    var opponent; //Opponent's tank.
 
     function preload () {
         //Load Map Images
         this.load.image("background", "/assets/background.png");
         this.load.image("ground"    , "/assets/ground.png");
+        this.load.image("wall"      , "/assets/wall.png");
 
         //Load Tank images.
         this.load.image("red-tank"   , "/assets/red.png");
@@ -39,9 +44,14 @@ window.onload = function () {
 
     function create () {
         gm = new GameManager(this);
+        im = new InputManager(this);
+        player = new LightTank(this, 'green-tank', 100, 540);
+        opponent = new LightTank(this, 'purple-tank', 1280-100, 540);
+
+        gm.setCurrentTank(player);
     }
 
     function update () {
-
+        gm.handleInput();
     }
 }
