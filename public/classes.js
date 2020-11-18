@@ -10,42 +10,69 @@ const FireState = {
     'SettingPower': 1,
 }
 
-class InputManager {
-    constructor(scene) {
-    }
+class Map {
+    constructor(scene){
+        this.mapLength = scene.width;
+        this.mapHeight = scene.height;
 
-    handleInput() {
+        scene.background = scene.add.image(0,0,'background').setOrigin(0,0);
 
+        scene.ground = scene.physics.add.staticGroup();
+        scene.ground.create(640, 710, 'ground');
+
+        scene.wall = scene.physics.add.staticGroup();
+        scene.wall.create(640, 610, 'wall');
+
+        scene.tanks  = scene.physics.add.group();
+        scene.shells = scene.physics.add.group();
+
+        //Global physics.
+        scene.physics.add.collider(scene.tanks, scene.ground);
+        scene.physics.add.collider(scene.tanks, scene.wall);
+
+        scene.physics.add.collider(scene.shells, scene.ground, function(shell, ground) {
+            shell.destroy();
+        });
+        scene.physics.add.collider(scene.shells, scene.wall);
     }
 }
 
+
 class GameManager {
     constructor(scene) {
-        this.map = new Map(scene, 'background', 'ground');
+
+        //Items related to game state.
+        this.map = new Map(scene);
         this.state = GameState['Player1Turn'];
-        this.fireState = FireState['SettingAngle'];
         this.turnLength = 30;
         this.timeLeft = 30;
         this.currentTank = null;
 
-        this.AKey     = scene.input.keyboard.addKey('A');
-        this.DKey     = scene.input.keyboard.addKey('D');
-        this.ZKey     = scene.input.keyboard.addKey('Z');
-        this.XKey     = scene.input.keyboard.addKey('X');
-        this.CKey     = scene.input.keyboard.addKey('C');
-        this.WKey     = scene.input.keyboard.addKey('W');
-        this.WKeyPres = false;
-        this.SKey     = scene.input.keyboard.addKey('S');
-
+        //Input related.
         this.pointer  = scene.input.mousePointer;
+        this.key = {
+            'A': scene.input.keyboard.addKey('A'),
+            'D': scene.input.keyboard.addKey('D'),
+            'Z': scene.input.keyboard.addKey('Z'),
+            'X': scene.input.keyboard.addKey('X'),
+            'C': scene.input.keyboard.addKey('C'),
+            'W': scene.input.keyboard.addKey('W'),
+            'S': scene.input.keyboard.addKey('S')
+        };
+        this.keyPress = {
+            'W': false
+        };
 
-        this.fireAngle;
-        this.firePower;
+        //Related to firing.
+        this.fireState = FireState['SettingAngle'];
+        this.fireAngle = 0;
+        this.firePower = 0;
 
-        this.timeText = scene.add.text(10,10, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
-        this.angleText = scene.add.text(10,34,"Angle: ",{fontSize: '24px', fill:'#000'});
-        this.powerText = scene.add.text(10, 58, "Power: 0",{fontSize: '24px', fill:'#000'});
-        this.shellText = scene.add.text(10, 82, "Shell: Light",{fontSize: '24px', fill:'#000'});
+        //Text.
+        this.timeText  = scene.add.text(10,10, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
+        this.angleText = scene.add.text(10,34, "Angle: ",{fontSize: '24px', fill:'#000'});
+        this.powerText = scene.add.text(10,58, "Power: ",{fontSize: '24px', fill:'#000'});
+        this.shellText = scene.add.text(10,82, "Shell: Light",{fontSize: '24px', fill:'#000'});
     }
 
     notify() {
@@ -54,35 +81,37 @@ class GameManager {
 
     handleInput() {
         
-        //Controls for moving the tank.
-        if(this.AKey.isDown) {
+        /*Controls for moving the tank.*/
+        if(this.key['A'].isDown) {
             this.currentTank.moveLeft();
-        } else if(this.DKey.isDown) {
+        } else if(this.key['D'].isDown) {
             this.currentTank.moveRight();
         } else {
             this.currentTank.moveStop();
         }
 
-        //Controls for switching shells.
-        if(this.ZKey.isDown) {
+        /*Controls for switching shells.*/
+        if(this.key['Z'].isDown) {
             this.shellText.setText("Shell: Light");
-        } else if(this.XKey.isDown) {
+        } else if(this.key['X'].isDown) {
             this.shellText.setText("Shell: Heavy")
-        } else if(this.CKey.isDown) {
+        } else if(this.key['C'].isDown) {
             this.shellText.setText("Shell: Explosive");
         }
 
-        //Controls for firing.
+        /*Controls for firing.*/
 
-        if(this.WKey.isUp) {
-            this.WKeyPres = false;
+        //Make sure W key has come up before checking
+        //if the key is down again.
+        if(this.key['W'].isUp) {
+            this.keyPress['W'] = false;
         }
 
         //Selecting angle.
         if(this.fireState == FireState['SettingAngle']){
-            if(this.WKey.isDown && this.WKeyPres == false){
+            if(this.key['W'].isDown && this.keyPress['W'] == false){
                 this.fireState = FireState['SettingPower'];
-                this.WKeyPres = true;
+                this.keyPress['W'] = true;
             }
 
             let x = this.pointer.x - this.currentTank.getX();
@@ -104,15 +133,17 @@ class GameManager {
 
         //Setting power and firing.
         if(this.fireState == FireState['SettingPower']) {
-            if(this.SKey.isDown) {
+            if(this.key['S'].isDown) {
                 this.fireState = FireState['SettingAngle'];
             }
 
-            if(this.WKey.isDown && this.WKeyPres == false) {
+            if(this.key['W'].isDown && this.keyPress['W'] == false) {
                 this.fireState = FireState['SettingAngle'];
-                this.WKeyPres = true;
+                this.keyPress['W'] = true;
+                this.currentTank.fire(this.fireAngle, this.firePower);
             }
 
+            //Only allow power between 0 and 1000.
             if(this.pointer.x > 0 && this.pointer.x < 1000) {
                 this.firePower = this.pointer.x;
                 this.powerText.setText("Power: " + this.firePower.toPrecision(3));
@@ -133,60 +164,26 @@ class GameManager {
     }
 }
 
-class Map {
-    constructor(scene, background, ground){
-        this.mapLength = scene.width;
-        this.mapHeight = scene.height;
-
-        scene.background = scene.add.image(0,0,background).setOrigin(0,0);
-
-        scene.ground = scene.physics.add.staticGroup();
-        scene.ground.create(640, 710, 'ground');
-
-        scene.wall = scene.physics.add.staticGroup();
-        scene.wall.create(640, 610, 'wall');
-    }
-}
-
 class Tank {
     constructor(scene, image, x, y) {
+        this.scene = scene;
         this.image = image;
+        this.shell = new NormalShell(scene);
+
         this.ref = scene.physics.add.image(x,y,image);
-        scene.physics.add.collider(this.ref, scene.ground);
-        scene.physics.add.collider(this.ref, scene.wall);
-    }
-
-    fire(x,y) {}
-
-    moveRight(){}
-
-    moveLeft(){}
-
-    moveStop(){}
-
-    getX() {}
-
-    getY() {}
-
-    selectTankShell(){}
-}
-
-class LightTank extends Tank {
-    constructor(scene, image, x, y) {
-        super(scene, image, x, y);
-
         this.ref.setCollideWorldBounds(true);
-        this.ref.setGravityY(200);
+        this.scene.tanks.add(this.ref);
     }
 
-    fire(x,y) {}
-
+    fire(angle, power) {
+        this.shell.fire(this.ref.x, this.ref.y, angle, power);
+    }
     moveRight(){
-        this.ref.setVelocityX(100);
+        this.ref.setVelocityX(this.speed);
     }
 
     moveLeft(){
-        this.ref.setVelocityX(-100);
+        this.ref.setVelocityX(-this.speed);
     }
 
     moveStop(){
@@ -204,23 +201,26 @@ class LightTank extends Tank {
     selectTankShell(){}
 }
 
+class LightTank extends Tank {
+    constructor(scene, image, x, y) {
+        super(scene, image, x, y);
+        this.health = 100;
+        this.armor = 5;
+        this.speed = 100;
+
+        //Set physics properties.
+        this.ref.setCollideWorldBounds(true);
+        this.ref.setGravityY(200);
+    }
+
+    selectTankShell(){
+
+    }
+}
+
 class HeavyTank extends Tank {
     constructor(scene, image, x, y) {
         super(scene, image, x, y);
-    }
-
-    fire(x,y) {}
-
-    moveRight(){}
-
-    moveLeft(){}
-
-    getX() {
-
-    }
-
-    getY() {
-        
     }
 
     selectTankShell(){}
@@ -228,24 +228,44 @@ class HeavyTank extends Tank {
 
 class TankShell {
     constructor(scene) {
+        this.scene = scene;
+    }
 
+    fire(x, y, angle, power) {
+        //Add shell to game.
+        let shell = this.scene.physics.add.image(x,y,this.image);
+        this.scene.shells.add(shell);
+
+        //Convert angle to radians and grab velocities.
+        angle = angle*(Math.PI/180);
+        let xVel  = Math.cos(angle)*power;
+        let yVel  = (-1)*Math.sin(angle)*power;
+
+        //Fire shell.
+        shell.setCollideWorldBounds(true);
+        shell.setBounce(0.5);
+        shell.setGravityY(this.weight);
+        shell.setVelocityX(xVel);
+        shell.setVelocityY(yVel);
     }
 }
 
 class NormalShell extends TankShell{
-    constructor() {
-
+    constructor(scene) {
+        super(scene);
+        this.weight = 300;
+        this.image = 'red-shell';
     }
 }
 
 class HeavyShell extends TankShell{
-    constructor() {
+    constructor(scene) {
 
     }
 }
 
 class ExplosiveShell extends TankShell{
-    constructor() {
+    constructor(scene) {
 
     }
 }

@@ -17,9 +17,7 @@ window.onload = function () {
     };
 
     var game = new Phaser.Game(config);
-    var date = new Date();
     var gm;       //GameManager
-    var im;       //InputManager
     var player;   //Player's tank.
     var opponent; //Opponent's tank.
 
@@ -44,7 +42,6 @@ window.onload = function () {
 
     function create () {
         gm = new GameManager(this);
-        im = new InputManager(this);
         player = new LightTank(this, 'green-tank', 100, 540);
         opponent = new LightTank(this, 'purple-tank', 1280-100, 540);
 
