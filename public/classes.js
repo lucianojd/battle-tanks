@@ -1,7 +1,7 @@
 const GameState = {
     'WaitingForPlayers': 0,
-    'Player1Turn': 1,
-    'Player2Turn': 2,
+    'PlayerTurn': 1,
+    'Opponent': 2,
     'Finished': 3
 }
 
@@ -10,40 +10,12 @@ const FireState = {
     'SettingPower': 1,
 }
 
-class Map {
-    constructor(scene){
-        this.mapLength = scene.width;
-        this.mapHeight = scene.height;
-
-        scene.background = scene.add.image(0,0,'background').setOrigin(0,0);
-
-        scene.ground = scene.physics.add.staticGroup();
-        scene.ground.create(640, 710, 'ground');
-
-        scene.wall = scene.physics.add.staticGroup();
-        scene.wall.create(640, 610, 'wall');
-
-        scene.tanks  = scene.physics.add.group();
-        scene.shells = scene.physics.add.group();
-
-        //Global physics.
-        scene.physics.add.collider(scene.tanks, scene.ground);
-        scene.physics.add.collider(scene.tanks, scene.wall);
-
-        scene.physics.add.collider(scene.shells, scene.ground, function(shell, ground) {
-            shell.destroy();
-        });
-        scene.physics.add.collider(scene.shells, scene.wall);
-    }
-}
-
-
+//Main class for managing all game activity.
 class GameManager {
     constructor(scene) {
 
         //Items related to game state.
-        this.map = new Map(scene);
-        this.state = GameState['Player1Turn'];
+        this.state = GameState['WaitingForPlayers'];
         this.turnLength = 30;
         this.timeLeft = 30;
         this.currentTank = null;
@@ -73,9 +45,25 @@ class GameManager {
         this.angleText = scene.add.text(10,34, "Angle: ",{fontSize: '24px', fill:'#000'});
         this.powerText = scene.add.text(10,58, "Power: ",{fontSize: '24px', fill:'#000'});
         this.shellText = scene.add.text(10,82, "Shell: Light",{fontSize: '24px', fill:'#000'});
+
+        this.opponentHealthText = scene.add.text(950, 10, "Opponent Health: ", {fontSize: '24px', fill:'#000'});
+        this.playerHealthText   = scene.add.text(950, 34, "Your health: ", {fontSize: '24px', fill:'#000'});
     }
 
-    notify() {
+    //Tells GameManager to check the game.
+    notifyTankChange(tank) {
+        let id = tank.getId();
+
+        if(id == 'player') {
+            this.playerHealthText.setText("Your Health: " + tank.getHealth());
+        }
+
+        if(id == 'opponent') {
+            this.opponentHealthText.setText("Opponent Health: " + tank.getHealth());
+        }
+    }
+
+    notifyTimeChange(time) {
         
     }
 
@@ -93,10 +81,13 @@ class GameManager {
         /*Controls for switching shells.*/
         if(this.key['Z'].isDown) {
             this.shellText.setText("Shell: Light");
+            this.currentTank.selectTankShell('light');
         } else if(this.key['X'].isDown) {
             this.shellText.setText("Shell: Heavy")
+            this.currentTank.selectTankShell('heavy');
         } else if(this.key['C'].isDown) {
             this.shellText.setText("Shell: Explosive");
+            this.currentTank.selectTankShell('explosive');
         }
 
         /*Controls for firing.*/
@@ -144,7 +135,7 @@ class GameManager {
             }
 
             //Only allow power between 0 and 1000.
-            if(this.pointer.x > 0 && this.pointer.x < 1000) {
+            if(this.pointer.x > 0 && this.pointer.x < 700) {
                 this.firePower = this.pointer.x;
                 this.powerText.setText("Power: " + this.firePower.toPrecision(3));
             }
@@ -153,6 +144,10 @@ class GameManager {
 
     setCurrentTank(tank) {
         this.currentTank = tank;
+    }
+
+    getState() {
+        return this.state;
     }
 
     broadcastInput() {
@@ -165,24 +160,30 @@ class GameManager {
 }
 
 class Tank {
-    constructor(scene, image, x, y) {
+    constructor(scene, id, image, x, y) {
         this.scene = scene;
+        this.id = id;
         this.image = image;
         this.shell = new NormalShell(scene);
+        this.update = true;
 
         this.ref = scene.physics.add.image(x,y,image);
-        this.ref.setCollideWorldBounds(true);
         this.scene.tanks.add(this.ref);
+
+        //Need this to be able to run collisions with TankShells.
+        //This attaches a reference to this object to the physics object.
+        this.ref.myref = this;
     }
 
     fire(angle, power) {
         this.shell.fire(this.ref.x, this.ref.y, angle, power);
     }
-    moveRight(){
+
+    moveRight() {
         this.ref.setVelocityX(this.speed);
     }
 
-    moveLeft(){
+    moveLeft() {
         this.ref.setVelocityX(-this.speed);
     }
 
@@ -198,34 +199,43 @@ class Tank {
         return this.ref.y;
     }
 
-    selectTankShell(){}
-}
-
-class LightTank extends Tank {
-    constructor(scene, image, x, y) {
-        super(scene, image, x, y);
-        this.health = 100;
-        this.armor = 5;
-        this.speed = 100;
-
-        //Set physics properties.
-        this.ref.setCollideWorldBounds(true);
-        this.ref.setGravityY(200);
+    getId() {
+        return this.id;
     }
 
-    selectTankShell(){
+    getHealth() {
+        return this.health;
+    }
 
+    damage(damage) {
+        this.health -= damage - this.armor;
+        this.setUpdate();
+    }
+
+    selectTankShell(shellName) {
+        //Instantiate next shell.
+        if(shellName == 'light') {
+            this.shell = new NormalShell(this.scene);
+        } else if(shellName == 'heavy') {
+            this.shell = new HeavyShell(this.scene);
+        } else if(shellName == 'explosive') {
+            this.shell = new ExplosiveShell(this.scene);
+        }
+    }
+
+    setUpdate() {
+        this.update = true;
+    }
+
+    checkUpdate() {
+        let temp = this.update;
+        this.update = false;
+        return temp;
     }
 }
 
-class HeavyTank extends Tank {
-    constructor(scene, image, x, y) {
-        super(scene, image, x, y);
-    }
-
-    selectTankShell(){}
-}
-
+//Instantiating class does not add shell object to the game.
+//The shell is added when the fire method is called.
 class TankShell {
     constructor(scene) {
         this.scene = scene;
@@ -233,8 +243,17 @@ class TankShell {
 
     fire(x, y, angle, power) {
         //Add shell to game.
-        let shell = this.scene.physics.add.image(x,y,this.image);
+        let shell = this.scene.physics.add.image(x,y-30,this.image);
         this.scene.shells.add(shell);
+
+        //Need this for c
+        shell.myref = this;
+        
+
+        //Set physics properties before firing.
+        shell.setCollideWorldBounds(true);
+        shell.setBounce(0.5);
+        shell.setGravityY(this.weight);
 
         //Convert angle to radians and grab velocities.
         angle = angle*(Math.PI/180);
@@ -242,11 +261,36 @@ class TankShell {
         let yVel  = (-1)*Math.sin(angle)*power;
 
         //Fire shell.
-        shell.setCollideWorldBounds(true);
-        shell.setBounce(0.5);
-        shell.setGravityY(this.weight);
         shell.setVelocityX(xVel);
         shell.setVelocityY(yVel);
+    }
+
+    getDamage() {
+        return this.damage;
+    }
+}
+
+class LightTank extends Tank {
+    constructor(scene, id, image, x, y) {
+        super(scene, id, image, x, y);
+        this.health = 100;
+        this.armor  = 5;
+        this.speed  = 100;
+        this.weight = 300;
+        this.ref.setGravityY(this.weight);
+        this.ref.setCollideWorldBounds(true);
+    }
+}
+
+class HeavyTank extends Tank {
+    constructor(scene, id, image, x, y) {
+        super(scene, id, image, x, y);
+        this.health = 100;
+        this.armor  = 10;
+        this.speed  = 50;
+        this.weight = 400;
+        this.ref.setGravityY(this.weight);
+        this.ref.setCollideWorldBounds(true);
     }
 }
 
@@ -254,18 +298,57 @@ class NormalShell extends TankShell{
     constructor(scene) {
         super(scene);
         this.weight = 300;
-        this.image = 'red-shell';
+        this.image  = 'red-shell';
+        this.damage = 25;
+        this.bounce = 0.2;
     }
 }
 
 class HeavyShell extends TankShell{
     constructor(scene) {
-
+        super(scene);
+        this.weight = 600;
+        this.image  = 'green-shell';
+        this.damage = 50;
+        this.bounce = 0.2;
     }
 }
 
 class ExplosiveShell extends TankShell{
     constructor(scene) {
+        super(scene);
+        this.weight = 300;
+        this.image  = 'blue-shell';
+        this.damage = 10;
+        this.bounce = 1.2;
+    }
 
+    //Overrides normal fire function to fire three shells.
+    fire(x, y, angle, power) {
+        let shells = [
+            this.scene.physics.add.image(x   ,y-25,this.image).setScale(0.7),
+            this.scene.physics.add.image(x-20,y-30,this.image).setScale(0.7),
+            this.scene.physics.add.image(x+20,y-30,this.image).setScale(0.7)
+        ];
+
+        //Convert angle to radians and grab velocities.
+        angle = angle*(Math.PI/180);
+        let xVel  = Math.cos(angle)*power;
+        let yVel  = (-1)*Math.sin(angle)*power;
+
+        for(let i = 0; i < 3; i++) {
+            //Add shell to game.
+            shells[i].myref = this;
+            this.scene.shells.add(shells[i]);
+
+            //Set physics properties before firing.
+            shells[i].setCollideWorldBounds(true);
+            shells[i].setBounce(this.bounce);
+            shells[i].setGravityY(this.weight);
+
+            //Fire shell.
+            shells[i].setVelocityX(xVel);
+            shells[i].setVelocityY(yVel);
+        }
     }
 }
