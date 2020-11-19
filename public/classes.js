@@ -1,7 +1,7 @@
 const GameState = {
     'WaitingForPlayers': 0,
     'PlayerTurn': 1,
-    'Opponent': 2,
+    'OpponentTurn': 2,
     'Finished': 3
 }
 
@@ -12,13 +12,14 @@ const FireState = {
 
 //Main class for managing all game activity.
 class GameManager {
-    constructor(scene) {
+    constructor(scene, socket) {
 
         //Items related to game state.
         this.state = GameState['WaitingForPlayers'];
         this.turnLength = 30;
         this.timeLeft = 30;
         this.currentTank = null;
+        this.socket = socket;
 
         //Input related.
         this.pointer  = scene.input.mousePointer;
@@ -68,14 +69,16 @@ class GameManager {
     }
 
     handleInput() {
-        
         /*Controls for moving the tank.*/
         if(this.key['A'].isDown) {
             this.currentTank.moveLeft();
+            this.socket.emit('sendTankMove', 'left');
         } else if(this.key['D'].isDown) {
             this.currentTank.moveRight();
+            this.socket.emit('sendTankMove', 'right');
         } else {
             this.currentTank.moveStop();
+            this.socket.emit('sendTankMove', 'stop');
         }
 
         /*Controls for switching shells.*/
@@ -142,6 +145,18 @@ class GameManager {
         }
     }
 
+    handleBroadcast(command, move) {
+        if(command == 'sendTankMove') {
+            if(move == 'left') {
+                this.currentTank.moveRight();
+            } else if(move == 'right') {
+                this.currentTank.moveLeft();
+            } else {
+                this.currentTank.moveStop();
+            }
+        }
+    }
+
     setCurrentTank(tank) {
         this.currentTank = tank;
     }
@@ -150,12 +165,8 @@ class GameManager {
         return this.state;
     }
 
-    broadcastInput() {
-
-    }
-
-    broadcastState() {
-
+    setState(state) {
+        this.state = GameState[state];
     }
 }
 
@@ -320,7 +331,7 @@ class ExplosiveShell extends TankShell{
         this.weight = 300;
         this.image  = 'blue-shell';
         this.damage = 10;
-        this.bounce = 1.2;
+        this.bounce = 0.8;
     }
 
     //Overrides normal fire function to fire three shells.

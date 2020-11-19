@@ -17,9 +17,15 @@ window.onload = function () {
     };
 
     var game = new Phaser.Game(config);
+    var scene;    //Reference to the scene.
     var gm;       //GameManager
     var player;   //Player's tank.
     var opponent; //Opponent's tank.
+    var socket;   //Socket.
+    var ids = {
+        'player': '',
+        'opponent': ''
+    }
 
     function preload () {
         //Load Map Images
@@ -41,6 +47,9 @@ window.onload = function () {
     }
 
     function create () {
+        //Save scene reference.
+        scene = this;
+
         //Add the background.
         this.background = this.add.image(0,0,'background').setOrigin(0,0);
 
@@ -72,21 +81,62 @@ window.onload = function () {
             shell.destroy();
         });
 
-        gm       = new GameManager(this);
-        player   = new LightTank(this, 'player', 'green-tank', 100, 540);
-        opponent = new LightTank(this, 'opponent', 'purple-tank', 1280-100, 540);
+        //Create GameManager and Player.
+        socket = io();
+        gm     = new GameManager(this, socket);
+        player = new LightTank(this, 'player', 'red-tank', 100, 540);
 
-        //This sets the current tank to be controlled.
-        gm.setCurrentTank(player);
+        //Get my socket id.
+        socket.on('connect', (id) => {
+            ids['player'] = id;
+        });
+
+        //Join players.
+        socket.on('playerJoined', (params) => {
+            if(params['firstToJoin'] == false) {
+                gm.setState('PlayerTurn');
+                socket.emit('playerJoined', {'firstToJoin': true, 'id': ids['player']});
+            } else {
+                gm.setState('OpponentTurn');
+            }
+
+            ids['opponent'] = params['id'];
+            opponent = new LightTank(scene, 'opponent', 'blue-tank', 1180, 540);
+        })
+
+        socket.on('sendTankMove', (move) => {
+            console.log(move);
+            gm.handleBroadcast('sendTankMove', move);
+        });
     }
 
     function update () {
-        gm.handleInput();
+        if(gm.getState() == GameState['WaitingForPlayers']) 
+        {
+            //Do nothing.
+        } 
+        else if(gm.getState() == GameState['PlayerTurn'])
+        {
+            gm.setCurrentTank(player);
+            gm.handleInput();
+        }
+        else if(gm.getState() == GameState['OpponentTurn'])
+        {
+            gm.setCurrentTank(opponent);
+        }
+        else if(gm.getState() == GameState['Finished'])
+        {
+
+        }
+
+        //Check for updates from tanks.
+        if(opponent != null) {
+            if(opponent.checkUpdate()) {
+                gm.notifyTankChange(opponent);
+            }
+        }
         if(player.checkUpdate()) {
             gm.notifyTankChange(player);
-        }
-        if(opponent.checkUpdate) {
-            gm.notifyTankChange(opponent);
         }
     }
 }

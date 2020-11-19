@@ -9,15 +9,30 @@ app.use(express.static(__dirname + '/public'));
 
 //Socket.io for game.
 io.on('connection', (socket) => {
-    socket.on('sendTankMove', (move) => {
+    console.log("Tank driver with id " + socket.id + " connected.");
+
+    //Send that you have joined.
+    socket.broadcast.emit('playerJoined', {'firstToJoin': false, 'id': socket.id});
+
+    //Player who first joined acknowledges other player joined.
+    socket.on('playerJoined', (params) => {
+        socket.broadcast.emit('playerJoined', params);
+    });
+
+    //Send tank move to the other player.
+    socket.on('sendTankMove', (params) => {
+        console.log(params);
+        socket.broadcast.emit('sendTankMove', params);
+    });
+    socket.on('fireTankShell', (params) => {
 
     });
-    socket.on('fireTankShell', (move) => {
+    socket.on('sendTimeUpdate', (params) => {
 
     });
-    socket.on('sendTimeUpdate', (move) => {
-
-    });
+    socket.on('disconnect', () => {
+        console.log("Tank driver with id " + socket.id + " disconnected.");
+    })
 });
 
 server.listen(port, () => {
