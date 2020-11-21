@@ -25,7 +25,7 @@ window.onload = function () {
     var ids = {
         'player': '',
         'opponent': ''
-    }
+    }; //Place to store socket ids. Not currently used but may be useful.
 
     function preload () {
         //Load Map Images
@@ -91,7 +91,7 @@ window.onload = function () {
             ids['player'] = id;
         });
 
-        //Join players.
+        //Handles connecting the two players.
         socket.on('playerJoined', (params) => {
             if(params['firstToJoin'] == false) {
                 gm.setState('PlayerTurn');
@@ -104,9 +104,20 @@ window.onload = function () {
             opponent = new LightTank(scene, 'opponent', 'blue-tank', 1180, 540);
         })
 
+        //Incoming tank moves are handled here.
         socket.on('sendTankMove', (move) => {
             console.log(move);
             gm.handleBroadcast('sendTankMove', move);
+        });
+
+        //Handle opponent firing shell.
+        socket.on('fireTankShell', (move) => {
+
+        });
+
+        //Recevies time update from other player.
+        socket.on('sendTimeUpdate', (time) => {
+
         });
     }
 

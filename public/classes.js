@@ -1,3 +1,4 @@
+//States for managing the game.
 const GameState = {
     'WaitingForPlayers': 0,
     'PlayerTurn': 1,
@@ -5,6 +6,7 @@ const GameState = {
     'Finished': 3
 }
 
+//States for firing procedure.
 const FireState = {
     'SettingAngle': 0,
     'SettingPower': 1,
@@ -36,12 +38,12 @@ class GameManager {
             'W': false
         };
 
-        //Related to firing.
+        //Related to firing procedure.
         this.fireState = FireState['SettingAngle'];
         this.fireAngle = 0;
         this.firePower = 0;
 
-        //Text.
+        //Text initialization and storage.
         this.timeText  = scene.add.text(10,10, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
         this.angleText = scene.add.text(10,34, "Angle: ",{fontSize: '24px', fill:'#000'});
         this.powerText = scene.add.text(10,58, "Power: ",{fontSize: '24px', fill:'#000'});
@@ -51,7 +53,8 @@ class GameManager {
         this.playerHealthText   = scene.add.text(950, 34, "Your health: ", {fontSize: '24px', fill:'#000'});
     }
 
-    //Tells GameManager to check the game.
+    //Tells GameManager to check the tank's health.
+    //Does not need to be broadcast to other client.
     notifyTankChange(tank) {
         let id = tank.getId();
 
@@ -64,10 +67,13 @@ class GameManager {
         }
     }
 
+    //Tells GameManager to update time left in the turn.
+    //Update this client and broadcast time update.
     notifyTimeChange(time) {
         
     }
 
+    //All keyboard and mouse input is handled here.
     handleInput() {
         /*Controls for moving the tank.*/
         if(this.key['A'].isDown) {
@@ -95,8 +101,7 @@ class GameManager {
 
         /*Controls for firing.*/
 
-        //Make sure W key has come up before checking
-        //if the key is down again.
+        //Make sure W key has come up before checking if the key is down again.
         if(this.key['W'].isUp) {
             this.keyPress['W'] = false;
         }
@@ -108,8 +113,11 @@ class GameManager {
                 this.keyPress['W'] = true;
             }
 
+            //Get angle based on mouse pointer position.
             let x = this.pointer.x - this.currentTank.getX();
             let y = (720 - this.pointer.y) - (720 - this.currentTank.getY());
+
+            //Prevent a divide by 0 error then calculate the angle.
             if(x != 0) {
                 this.fireAngle = Math.atan(y/x)*180/(Math.PI)
             
@@ -127,24 +135,29 @@ class GameManager {
 
         //Setting power and firing.
         if(this.fireState == FireState['SettingPower']) {
+
+            //If 'S' is pressed go back to selecting angle.
             if(this.key['S'].isDown) {
                 this.fireState = FireState['SettingAngle'];
             }
 
+            //When 'W' is pressed fire and go back to SettingAngle.
             if(this.key['W'].isDown && this.keyPress['W'] == false) {
                 this.fireState = FireState['SettingAngle'];
                 this.keyPress['W'] = true;
                 this.currentTank.fire(this.fireAngle, this.firePower);
             }
 
-            //Only allow power between 0 and 1000.
-            if(this.pointer.x > 0 && this.pointer.x < 700) {
+            //Only allow power between 0 and 800.
+            if(this.pointer.x > 0 && this.pointer.x < 800) {
                 this.firePower = this.pointer.x;
                 this.powerText.setText("Power: " + this.firePower.toPrecision(3));
             }
         }
     }
 
+    //Handles all broadcasted input.
+    //Similar to handleInput but does not receive commands from keyboard and mouse.
     handleBroadcast(command, move) {
         if(command == 'sendTankMove') {
             if(move == 'left') {
@@ -157,6 +170,7 @@ class GameManager {
         }
     }
 
+    //Sets what tank is currently active.
     setCurrentTank(tank) {
         this.currentTank = tank;
     }
@@ -183,6 +197,7 @@ class Tank {
 
         //Need this to be able to run collisions with TankShells.
         //This attaches a reference to this object to the physics object.
+        //Not a great solution but currently don't have an alternative.
         this.ref.myref = this;
     }
 
