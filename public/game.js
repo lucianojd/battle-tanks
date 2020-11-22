@@ -111,16 +111,15 @@ window.onload = function () {
         });
 
         //Handle opponent firing shell.
-        socket.on('fireTankShell', (move) => {
-
-        });
-
-        //Recevies time update from other player.
-        socket.on('sendTimeUpdate', (time) => {
-
+        socket.on('fireTankShell', (angle, power) => {
+            console.log(fired);
+            gm.handleFireBroadcast('fireTankShell', angle, power);
+            gm.setState('PlayerTurn');
         });
     }
 
+    //The update function is repeatedly called, and performs different behavior depending on 
+    // which game state the client is currently operating in.
     function update () {
         if(gm.getState() == GameState['WaitingForPlayers']) 
         {

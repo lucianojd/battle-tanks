@@ -25,8 +25,10 @@ io.on('connection', (socket) => {
     });
 
     //Send the angle and power for firing to the other player.
-    socket.on('fireTankShell', (params) => {
-
+    socket.on('fireTankShell', (params1, params2) => {
+        console.log(params1);
+        console.log(params2);
+        socket.broadcast.emit('fireTankShell', params1, params2);
     });
 
     //Current player tracks the time and updates the other player.

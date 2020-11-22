@@ -12,7 +12,7 @@
     "url": "https://gitlab.csc.uvic.ca/courses/2020091/SENG350/teams/group_24/battle-tanks.git"
   },
   "keywords": [],
-  "author": "Luciano De Gianni and Ryan Russel",
+  "author": "Luciano De Gianni and Ryan Russell",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",

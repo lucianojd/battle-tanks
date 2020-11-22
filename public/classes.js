@@ -44,10 +44,10 @@ class GameManager {
         this.firePower = 0;
 
         //Text initialization and storage.
-        this.timeText  = scene.add.text(10,10, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
-        this.angleText = scene.add.text(10,34, "Angle: ",{fontSize: '24px', fill:'#000'});
-        this.powerText = scene.add.text(10,58, "Power: ",{fontSize: '24px', fill:'#000'});
-        this.shellText = scene.add.text(10,82, "Shell: Light",{fontSize: '24px', fill:'#000'});
+        this.angleText = scene.add.text(10,10, "Angle: ",{fontSize: '24px', fill:'#000'});
+        this.powerText = scene.add.text(10,34, "Power: ",{fontSize: '24px', fill:'#000'});
+        this.shellText = scene.add.text(10,58, "Shell: Light",{fontSize: '24px', fill:'#000'});
+        //this.timeText  = scene.add.text(10,82, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
 
         this.opponentHealthText = scene.add.text(950, 10, "Opponent Health: ", {fontSize: '24px', fill:'#000'});
         this.playerHealthText   = scene.add.text(950, 34, "Your health: ", {fontSize: '24px', fill:'#000'});
@@ -65,12 +65,6 @@ class GameManager {
         if(id == 'opponent') {
             this.opponentHealthText.setText("Opponent Health: " + tank.getHealth());
         }
-    }
-
-    //Tells GameManager to update time left in the turn.
-    //Update this client and broadcast time update.
-    notifyTimeChange(time) {
-        
     }
 
     //All keyboard and mouse input is handled here.
@@ -146,6 +140,8 @@ class GameManager {
                 this.fireState = FireState['SettingAngle'];
                 this.keyPress['W'] = true;
                 this.currentTank.fire(this.fireAngle, this.firePower);
+                this.socket.emit('fireTankShell', this.fireAngle, this.firePower);
+                this.state = GameState['OpponentTurn'];
             }
 
             //Only allow power between 0 and 800.
@@ -168,6 +164,14 @@ class GameManager {
                 this.currentTank.moveStop();
             }
         }
+    }
+
+    //Handles all broadcasted input for shell firing.
+    //Similar to handleInput but does not receive commands from keyboard and mouse.
+    handleFireBroadcast(command, angle, power) {
+    	if (command == 'fireTankShell') {
+    		this.currentTank.fire(angle, power);
+    	}
     }
 
     //Sets what tank is currently active.
