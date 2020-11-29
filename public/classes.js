@@ -73,7 +73,7 @@ class GameManager {
             this.playerHealthText.setText("Your Health: " + tank.getHealth());
 
             //If your tank's health has dropped to 0 then you've lost.
-            if (tank.getHealth() == 0) {
+            if (tank.getHealth() <= 0) {
                 this.state = GameState['Lost'];
             }
         }
@@ -82,7 +82,7 @@ class GameManager {
             this.opponentHealthText.setText("Opponent Health: " + tank.getHealth());
 
             //If your opponent's tank's health has dropped to 0 then you've won!
-            if (tank.getHealth() == 0) {
+            if (tank.getHealth() <= 0) {
                 this.state = GameState['Won'];
             }
         }
@@ -106,12 +106,15 @@ class GameManager {
         if(this.key['Z'].isDown) {
             this.shellText.setText("Shell: Light");
             this.currentTank.selectTankShell('light');
+            this.socket.emit('shellSwitch', 'light');
         } else if(this.key['X'].isDown) {
             this.shellText.setText("Shell: Heavy")
             this.currentTank.selectTankShell('heavy');
+            this.socket.emit('shellSwitch', 'heavy');
         } else if(this.key['C'].isDown) {
             this.shellText.setText("Shell: Explosive");
             this.currentTank.selectTankShell('explosive');
+            this.socket.emit('shellSwitch', 'explosive');
         }
 
 
@@ -180,7 +183,7 @@ class GameManager {
     //Handles all broadcasted input.
     //Similar to handleInput but does not receive commands from keyboard and mouse.
     handleBroadcast(command, move) {
-        if(command == 'sendTankMove') {
+        if(command == 'sendTankMove' && this.currentTank != null) {
             if(move == 'left') {
                 this.currentTank.moveRight();
             } else if(move == 'right') {
@@ -194,9 +197,15 @@ class GameManager {
     //Handles all broadcasted input for shell firing.
     //Similar to handleInput but does not receive commands from keyboard and mouse.
     handleFireBroadcast(command, angle, power) {
-    	if (command == 'fireTankShell') {
+    	if (command == 'fireTankShell' && this.currentTank != null) {
     		this.currentTank.fire(180 - angle, power);
     	}
+    }
+
+    handleShellChangeBroadcast(shell) {
+        if(this.currentTank != null) {
+            this.currentTank.selectTankShell(shell);
+        }
     }
 
     //Sets what tank is currently active.

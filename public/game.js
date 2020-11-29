@@ -119,6 +119,10 @@ window.onload = function () {
             console.log('shots fired');
             gm.setState('PlayerTurn');
         });
+
+        socket.on('shellSwitch', (shell) => {
+            gm.handleShellChangeBroadcast(shell);
+        });
     }
 
     //The third of the inherent scene functions, the update function is repeatedly called
@@ -149,7 +153,7 @@ window.onload = function () {
             //Player has lost.
             gm.setLosingText();
         }
-
+        
         //Check for updates from tanks.
         if(opponent != null) {
             if(opponent.checkUpdate()) {

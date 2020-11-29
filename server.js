@@ -20,15 +20,16 @@ io.on('connection', (socket) => {
 
     //Send tank move to the other player.
     socket.on('sendTankMove', (params) => {
-        console.log(params);
         socket.broadcast.emit('sendTankMove', params);
     });
 
     //Send the angle and power for firing to the other player.
     socket.on('fireTankShell', (params1, params2) => {
-        console.log(params1);
-        console.log(params2);
         socket.broadcast.emit('fireTankShell', params1, params2);
+    });
+
+    socket.on('shellSwitch', (params) => {
+        socket.broadcast.emit('shellSwitch', params);
     });
 
     //Current player tracks the time and updates the other player.
