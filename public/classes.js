@@ -1,9 +1,10 @@
-//States for managing the game.
+//Five states for managing the game.
 const GameState = {
     'WaitingForPlayers': 0,
     'PlayerTurn': 1,
     'OpponentTurn': 2,
-    'Finished': 3
+    'Won': 3,
+    'Lost': 4
 }
 
 //States for firing procedure.
@@ -47,10 +48,20 @@ class GameManager {
         this.angleText = scene.add.text(10,10, "Angle: ",{fontSize: '24px', fill:'#000'});
         this.powerText = scene.add.text(10,34, "Power: ",{fontSize: '24px', fill:'#000'});
         this.shellText = scene.add.text(10,58, "Shell: Light",{fontSize: '24px', fill:'#000'});
-        //this.timeText  = scene.add.text(10,82, "Time left: " + this.timeLeft,{fontSize: '24px', fill:'#000'});
+        this.endText   = scene.add.text(500,300, "",{fontSize: '48px', fill:'#000'});
 
         this.opponentHealthText = scene.add.text(950, 10, "Opponent Health: ", {fontSize: '24px', fill:'#000'});
         this.playerHealthText   = scene.add.text(950, 34, "Your health: ", {fontSize: '24px', fill:'#000'});
+    }
+
+    //Sets the end of game display text to show that the player has won.
+    setWinningText() {
+        this.endText.setText("You Win! :)");
+    }
+
+    //Sets the end of game display text to show that the player has lost.
+    setLosingText() {
+        this.endText.setText("You Lose! :(");
     }
 
     //Tells GameManager to check the tank's health.
@@ -60,10 +71,20 @@ class GameManager {
 
         if(id == 'player') {
             this.playerHealthText.setText("Your Health: " + tank.getHealth());
+
+            //If your tank's health has dropped to 0 then you've lost.
+            if (tank.getHealth() == 0) {
+                this.state = GameState['Lost'];
+            }
         }
 
         if(id == 'opponent') {
             this.opponentHealthText.setText("Opponent Health: " + tank.getHealth());
+
+            //If your opponent's tank's health has dropped to 0 then you've won!
+            if (tank.getHealth() == 0) {
+                this.state = GameState['Won'];
+            }
         }
     }
 
@@ -93,7 +114,8 @@ class GameManager {
             this.currentTank.selectTankShell('explosive');
         }
 
-        /*Controls for firing.*/
+
+        /***** Controls for firing start here. *****/
 
         //Make sure W key has come up before checking if the key is down again.
         if(this.key['W'].isUp) {
@@ -152,6 +174,9 @@ class GameManager {
         }
     }
 
+    /***** Controls for firing end here. *****/
+
+
     //Handles all broadcasted input.
     //Similar to handleInput but does not receive commands from keyboard and mouse.
     handleBroadcast(command, move) {
@@ -170,7 +195,7 @@ class GameManager {
     //Similar to handleInput but does not receive commands from keyboard and mouse.
     handleFireBroadcast(command, angle, power) {
     	if (command == 'fireTankShell') {
-    		this.currentTank.fire(angle, power);
+    		this.currentTank.fire(180 - angle, power);
     	}
     }
 
@@ -188,6 +213,7 @@ class GameManager {
     }
 }
 
+//Instantiating class adds a tank to the game for the player.
 class Tank {
     constructor(scene, id, image, x, y) {
         this.scene = scene;
@@ -242,8 +268,8 @@ class Tank {
         this.setUpdate();
     }
 
+    //Select the desired shell type and instantiate next shell.
     selectTankShell(shellName) {
-        //Instantiate next shell.
         if(shellName == 'light') {
             this.shell = new NormalShell(this.scene);
         } else if(shellName == 'heavy') {
@@ -278,7 +304,6 @@ class TankShell {
 
         //Need this for c
         shell.myref = this;
-        
 
         //Set physics properties before firing.
         shell.setCollideWorldBounds(true);

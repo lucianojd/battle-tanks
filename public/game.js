@@ -27,6 +27,7 @@ window.onload = function () {
         'opponent': ''
     }; //Place to store socket ids. Not currently used but may be useful.
 
+    //First of the inherent scene functions which preloads the relevant game objects.
     function preload () {
         //Load Map Images
         this.load.image("background", "/assets/background.png");
@@ -46,6 +47,8 @@ window.onload = function () {
         this.load.image("green-shell" , "/assets/green-bullet.png")
     }
 
+    //Second of the inherent scene functions which adds game physics and handles the 
+    //socket connections from the opposing client.
     function create () {
         //Save scene reference.
         scene = this;
@@ -106,20 +109,20 @@ window.onload = function () {
 
         //Incoming tank moves are handled here.
         socket.on('sendTankMove', (move) => {
-            console.log(move);
             gm.handleBroadcast('sendTankMove', move);
+            console.log('sent move');
         });
 
         //Handle opponent firing shell.
         socket.on('fireTankShell', (angle, power) => {
-            console.log(fired);
             gm.handleFireBroadcast('fireTankShell', angle, power);
+            console.log('shots fired');
             gm.setState('PlayerTurn');
         });
     }
 
-    //The update function is repeatedly called, and performs different behavior depending on 
-    // which game state the client is currently operating in.
+    //The third of the inherent scene functions, the update function is repeatedly called
+    //and performs different behavior depending on which game state the client is currently operating in.
     function update () {
         if(gm.getState() == GameState['WaitingForPlayers']) 
         {
@@ -127,16 +130,24 @@ window.onload = function () {
         } 
         else if(gm.getState() == GameState['PlayerTurn'])
         {
+            //Allowing player to move to their desired location and fire a single shell.
             gm.setCurrentTank(player);
             gm.handleInput();
         }
         else if(gm.getState() == GameState['OpponentTurn'])
         {
+            //Opponent has the opportunity to move and fire a shell.
             gm.setCurrentTank(opponent);
         }
-        else if(gm.getState() == GameState['Finished'])
+        else if(gm.getState() == GameState['Won'])
         {
-
+            //Player has won.
+            gm.setWinningText();
+        }
+        else if(gm.getState() == GameState['Lost'])
+        {
+            //Player has lost.
+            gm.setLosingText();
         }
 
         //Check for updates from tanks.
@@ -145,6 +156,7 @@ window.onload = function () {
                 gm.notifyTankChange(opponent);
             }
         }
+        
         if(player.checkUpdate()) {
             gm.notifyTankChange(player);
         }
