@@ -31,11 +31,6 @@ io.on('connection', (socket) => {
     socket.on('shellSwitch', (params) => {
         socket.broadcast.emit('shellSwitch', params);
     });
-
-    //Current player tracks the time and updates the other player.
-    socket.on('sendTimeUpdate', (params) => {
-
-    });
 });
 
 server.listen(port, () => {
