@@ -1,11 +1,28 @@
 # Battle Tanks
 
 ## Description:
-A two player turn based strategy game based on Pocket Tanks by Bitwise Productions.
+An assignment completed by me and Ryan Russel for SENG 350 Software Architecture and Design at UVic.
+
+The game was built using HTML, the [Phaser](http://phaser.io/) framework, [Express](https://expressjs.com/), and [Socket.io](https://socket.io/).
 
 ## Rules:
-The goal is to destroy your opponents tank by hitting them with your tank shell.
+The goal is to destroy your opponent's tank. Each player has 100 health and can choose from three shells to fire:
+
+1. A heavy shell which takes more power to fire but deals more damage
+2. A light shell which deals less damage but takes less power to fire
+3. An explosive shell that consists of multiple smaller shells each do the least amount of damage
+
 Each player takes turns; on a player's turn they can move and adjust the angle and power of their shot.
 Once the player fires, their turn ends and the other player's turn begins.
-Turns are timed and if you do not fire within that time limit, you do not get to fire.
-Each player has 100 health and a shell impact deals 25 damage.
+
+## Starting A Game:
+To start a game follow these steps after cloning the repo:
+
+1. Navigate to the `battle-tanks` directory
+2. Start the game server using `node server.js` or `heroku local` if Heroku is installed
+3. Make note of the port number printed in the console. It will look like `Listening on port [port#]`
+4. Open two browser windows `window A` and `window B` in the browser of you choosing
+5. In `window A` navigate to `http://localhost:[port#]/` where `[port#]` is the port number printed in the console
+6. In `window B` navigate to `http://localhost:[port#]/`
+
+The game will have started now and the player using `window A` should be able to move and fire. 
